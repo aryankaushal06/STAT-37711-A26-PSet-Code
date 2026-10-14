@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 
 url = "https://archive.ics.uci.edu/static/public/844/average+localization+error+(ale)+in+sensor+node+localization+process+in+wsns.zip"
 df = pd.read_csv(url)
-X = df.iloc[:, :4]   # anchor_ratio, trans_range, node_density, iterations
+X = df.iloc[:, :4] 
 y = df["ale"]
 
 models = {
