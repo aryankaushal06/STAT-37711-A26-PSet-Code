@@ -20,14 +20,16 @@ models = {
     "MLP Regressor": make_pipeline(StandardScaler(), MLPRegressor(max_iter=5000)),
 }
 
-fig, axes = plt.subplots(1, len(models), figsize=(16, 4))
-for ax, (name, model) in zip(axes, models.items()):
+fig, axes = plt.subplots(2, 2, figsize=(10, 8))
+
+for ax, (name, model) in zip(axes.ravel(), models.items()):
     model.fit(X, y)
-    residual = y - model.predict(X)
-    stats.probplot(residual, dist="norm", plot=ax)
+    residuals = y - model.predict(X)
+    stats.probplot(residuals, dist="norm", plot=ax)
     ax.set_title(name)
-    stat, p = stats.normaltest(residual)
+    stat, p = stats.normaltest(residuals)
     print(name, "p-value:", p)
 
 plt.tight_layout()
+plt.savefig("qqplots.png", dpi=300)
 plt.show()
