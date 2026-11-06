@@ -4,3 +4,4 @@ __pycache__/
 *.log
 *.out
 *.synctex.gz
+README.md
