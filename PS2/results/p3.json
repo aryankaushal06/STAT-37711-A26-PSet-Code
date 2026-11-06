@@ -1,0 +1,255 @@
+{
+  "seed": 42,
+  "n_train": 600,
+  "n_val": 200,
+  "n_test": 200,
+  "response_variance_train": 2.463327201120436,
+  "rks_settings": {
+    "sigma_median_heuristic": 3.078934470171897,
+    "ridge_lambda": 1.0
+  },
+  "mlp_settings": {
+    "optimizer": "Adam",
+    "lr": 0.01,
+    "schedule": "cosine",
+    "epochs": 5000,
+    "activation": "tanh",
+    "device": "cpu"
+  },
+  "rks_sweep": [
+    {
+      "D": 10,
+      "train_mse": 0.24681804054776588,
+      "val_mse": 0.2328582083746737,
+      "val_mse_seed_mean": 0.2656943702119878,
+      "val_mse_seed_std": 0.09308857008700823
+    },
+    {
+      "D": 20,
+      "train_mse": 0.1685802373040952,
+      "val_mse": 0.16829371629067347,
+      "val_mse_seed_mean": 0.17176203391912734,
+      "val_mse_seed_std": 0.043800500902079174
+    },
+    {
+      "D": 50,
+      "train_mse": 0.041383004999799106,
+      "val_mse": 0.04276712642386146,
+      "val_mse_seed_mean": 0.052922441392135165,
+      "val_mse_seed_std": 0.009128408522333781
+    },
+    {
+      "D": 100,
+      "train_mse": 0.038472999324754946,
+      "val_mse": 0.03930707412723274,
+      "val_mse_seed_mean": 0.043331822697933384,
+      "val_mse_seed_std": 0.002682558365366253
+    },
+    {
+      "D": 200,
+      "train_mse": 0.03722293978922603,
+      "val_mse": 0.038156833492711234,
+      "val_mse_seed_mean": 0.037335701353723764,
+      "val_mse_seed_std": 0.0006157726406368268
+    },
+    {
+      "D": 400,
+      "train_mse": 0.03538810102093761,
+      "val_mse": 0.03639176463530772,
+      "val_mse_seed_mean": 0.03625766159542147,
+      "val_mse_seed_std": 0.0002298583350407002
+    },
+    {
+      "D": 800,
+      "train_mse": 0.033900716545636804,
+      "val_mse": 0.03584717023714892,
+      "val_mse_seed_mean": 0.0358662837794871,
+      "val_mse_seed_std": 0.00012947078654118585
+    },
+    {
+      "D": 1600,
+      "train_mse": 0.03328478385758184,
+      "val_mse": 0.03602097649870891,
+      "val_mse_seed_mean": 0.035968525396335105,
+      "val_mse_seed_std": 6.187333104541075e-05
+    }
+  ],
+  "mlp_sweep": [
+    {
+      "width": 8,
+      "train_mse": 0.0335427562744592,
+      "val_mse": 0.03858131562194391,
+      "val_mse_seed_mean": 0.039852252396321244,
+      "val_mse_seed_std": 0.002523301920985709,
+      "train_mse_300_epochs_constant_lr": 0.12918612654100126,
+      "val_mse_300_epochs_constant_lr": 0.13204532357191953
+    },
+    {
+      "width": 16,
+      "train_mse": 0.03258515638637365,
+      "val_mse": 0.03555081983818666,
+      "val_mse_seed_mean": 0.03697093661829004,
+      "val_mse_seed_std": 0.0008864639258161852,
+      "train_mse_300_epochs_constant_lr": 0.058959902093938366,
+      "val_mse_300_epochs_constant_lr": 0.05990535154972346
+    },
+    {
+      "width": 32,
+      "train_mse": 0.03131663774627947,
+      "val_mse": 0.038007846830626885,
+      "val_mse_seed_mean": 0.03755430938814537,
+      "val_mse_seed_std": 0.0006491948266428202,
+      "train_mse_300_epochs_constant_lr": 0.044734729194308064,
+      "val_mse_300_epochs_constant_lr": 0.04704361465833406
+    },
+    {
+      "width": 64,
+      "train_mse": 0.03026839387627793,
+      "val_mse": 0.03807009175544571,
+      "val_mse_seed_mean": 0.03791198592398738,
+      "val_mse_seed_std": 0.0003337408947174111,
+      "train_mse_300_epochs_constant_lr": 0.04287771311449287,
+      "val_mse_300_epochs_constant_lr": 0.04579531370639618
+    },
+    {
+      "width": 128,
+      "train_mse": 0.029949244118638762,
+      "val_mse": 0.03799427450541023,
+      "val_mse_seed_mean": 0.037569932014445896,
+      "val_mse_seed_std": 0.0005998913538702122,
+      "train_mse_300_epochs_constant_lr": 0.04322325803126483,
+      "val_mse_300_epochs_constant_lr": 0.04548580513170444
+    }
+  ],
+  "best_rks_D": 800,
+  "best_mlp_width": 16,
+  "rks_train_mse": 0.033900716545636804,
+  "mlp_train_mse": 0.03258515638637365,
+  "rks_val_mse": 0.03584717023714892,
+  "mlp_val_mse": 0.03555081983818666,
+  "val_mse_rks_minus_mlp": {
+    "mean": 0.0002963503989622615,
+    "ci95": [
+      -0.0016045897490848916,
+      0.0021972905470094145
+    ]
+  },
+  "surface_mean_abs_difference": 0.028478450787931445,
+  "surface_max_abs_difference": 0.2861362296123362,
+  "surface_max_difference_location": [
+    3.0,
+    3.0
+  ],
+  "surface_argmin": {
+    "rks": [
+      -1.5906040268456376,
+      0.020134228187919323
+    ],
+    "mlp": [
+      -1.5100671140939599,
+      0.06040268456375841
+    ]
+  },
+  "surface_argmax": {
+    "rks": [
+      1.550335570469798,
+      3.0
+    ],
+    "mlp": [
+      1.6308724832214763,
+      3.0
+    ]
+  },
+  "surface_range": {
+    "rks": [
+      -1.0286156193379588,
+      5.515867735610297
+    ],
+    "mlp": [
+      -1.0295183658599854,
+      5.497817516326904
+    ]
+  },
+  "rks_sensitivity_at_selected_D": [
+    {
+      "sigma": 0.5,
+      "lambda": 0.01,
+      "val_mse_seed_mean": 0.05328939532716594
+    },
+    {
+      "sigma": 0.5,
+      "lambda": 0.1,
+      "val_mse_seed_mean": 0.048145490023161194
+    },
+    {
+      "sigma": 0.5,
+      "lambda": 1.0,
+      "val_mse_seed_mean": 0.044699159851297465
+    },
+    {
+      "sigma": 0.5,
+      "lambda": 10.0,
+      "val_mse_seed_mean": 0.04403243251810978
+    },
+    {
+      "sigma": 1.0,
+      "lambda": 0.01,
+      "val_mse_seed_mean": 0.04347127305764966
+    },
+    {
+      "sigma": 1.0,
+      "lambda": 0.1,
+      "val_mse_seed_mean": 0.041650890919047216
+    },
+    {
+      "sigma": 1.0,
+      "lambda": 1.0,
+      "val_mse_seed_mean": 0.04023760151156707
+    },
+    {
+      "sigma": 1.0,
+      "lambda": 10.0,
+      "val_mse_seed_mean": 0.03965803905702773
+    },
+    {
+      "sigma": 2.0,
+      "lambda": 0.01,
+      "val_mse_seed_mean": 0.03764911784066384
+    },
+    {
+      "sigma": 2.0,
+      "lambda": 0.1,
+      "val_mse_seed_mean": 0.0374400078177803
+    },
+    {
+      "sigma": 2.0,
+      "lambda": 1.0,
+      "val_mse_seed_mean": 0.03679997569367763
+    },
+    {
+      "sigma": 2.0,
+      "lambda": 10.0,
+      "val_mse_seed_mean": 0.03695916243726409
+    },
+    {
+      "sigma": 3.078934470171897,
+      "lambda": 0.01,
+      "val_mse_seed_mean": 0.03674608960537741
+    },
+    {
+      "sigma": 3.078934470171897,
+      "lambda": 0.1,
+      "val_mse_seed_mean": 0.036237246392486246
+    },
+    {
+      "sigma": 3.078934470171897,
+      "lambda": 1.0,
+      "val_mse_seed_mean": 0.0358662837794871
+    },
+    {
+      "sigma": 3.078934470171897,
+      "lambda": 10.0,
+      "val_mse_seed_mean": 0.03839255160739287
+    }
+  ]
+}
