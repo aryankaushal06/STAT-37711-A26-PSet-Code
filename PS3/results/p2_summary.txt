@@ -1,15 +1,4 @@
-n=4898, features=11; train/val/test = 3428/490/980
-quality counts: {3: 20, 4: 163, 5: 1457, 6: 2198, 7: 880, 8: 175, 9: 5}
+train/val/test = 3428/490/980
 baseline (train mean 5.869): val MSE 0.8272, test MSE 0.7203
---- KNN (600 configs > 490 validation points)
-selected: {'n_neighbors': 15, 'weights': 'distance', 'p': 2}
-  train MSE 0.0000, val MSE 0.4209, test MSE 0.3495, test - val = -0.0714
-  rank of selected config by test MSE: 145 of 600
-best test MSE in grid (oracle, not usable): 0.3335 ({'n_neighbors': 18, 'weights': 'distance', 'p': 1}); its val MSE 0.4410
-across grid: Pearson corr(val, test) = 0.989, Spearman = 0.967; mean(test - val) = -0.0798
---- RandomForest (540 configs > 490 validation points)
-selected: {'n_estimators': 100, 'max_depth': None, 'min_samples_leaf': 1, 'max_features': 0.33}
-  train MSE 0.0553, val MSE 0.4010, test MSE 0.3191, test - val = -0.0818
-  rank of selected config by test MSE: 16 of 540
-best test MSE in grid (oracle, not usable): 0.3136 ({'n_estimators': 200, 'max_depth': 24, 'min_samples_leaf': 1, 'max_features': 0.2}); its val MSE 0.4123
-across grid: Pearson corr(val, test) = 0.994, Spearman = 0.988; mean(test - val) = -0.0870
+KNN (600 configs): selected {'n_neighbors': 15, 'weights': 'distance', 'p': 2}; train MSE 0.0000, val MSE 0.4209, test MSE 0.3495
+RandomForest (540 configs): selected {'n_estimators': 100, 'max_depth': None, 'min_samples_leaf': 1, 'max_features': 0.33}; train MSE 0.0553, val MSE 0.4010, test MSE 0.3191
