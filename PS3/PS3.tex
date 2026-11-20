@@ -1,0 +1,194 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{float}
+\emergencystretch=3em
+\title{Aryan K STAT 37711 PS3}
+\author{Aryan Kaushal}
+\begin{document}
+\maketitle
+
+
+\section*{Problem 1}
+
+\begin{enumerate}[label=\alph*.]
+\item
+\begin{enumerate}[label=\roman*.]
+\item $Y\in\{0,1,2,\ldots\}$ is a count, so its conditional distribution should be a discrete distribution on the non-negative integers; the Poisson is the exponential family for count data, $p(y)=\frac{1}{y!}\exp(\eta y-e^{\eta})$ with $h(y)=\frac{1}{y!}$, $t(y)=y$, $a(\eta)=e^\eta$, and natural parameter $\eta=\log\mathbb E[Y]$
+
+It has a single parameter, the rate $\lambda(x)=\mathbb E[Y\mid X=x]>0$, so a regression model only needs to learn one positive function of $x$, and it arises naturally for counts of many rare, roughly independent events
+
+A Normal model with squared error would instead place mass on negative and non-integer values, and could predict a negative mean
+
+\item The trees output real numbers, so $f(x)=\sum_j\lambda_jh_j(x)\in\mathbb R$ is unconstrained, while the Poisson rate must satisfy $\lambda(x)>0$; the link $\lambda(x)=e^{f(x)}$ maps $\mathbb R$ onto $\mathbb R_+$, so every value of $f$ gives a valid distribution
+
+It is also the canonical link: $\eta=\log\mathbb E[Y\mid x]$ is the natural parameter, so setting $\eta(x)=f(x)$ is exactly the recipe from lecture of letting the predictor be the natural parameter, and it gives the simple loss and gradient below
+
+Finally, additive tree contributions act multiplicatively on the rate, $\lambda(x)=\prod_je^{\lambda_jh_j(x)}$, a natural scale for counts
+\end{enumerate}
+
+\item The loss is the negative log-likelihood of $Y\sim\operatorname{Poi}(e^{f(x)})$:
+$$L(y,f(x))=-\log\left(\frac{e^{yf(x)}\exp(-e^{f(x)})}{y!}\right)=e^{f(x)}-y\,f(x)+\log(y!)$$
+
+The term $\log(y!)$ does not depend on $f$, so one can equivalently use $L(y,f(x))=e^{f(x)}-yf(x)$, and learning minimizes $\frac{1}{n}\sum\limits_{i=1}^n\left(e^{f(x_i)}-y_if(x_i)\right)$
+
+\item $$\frac{dL}{df(x)}=e^{f(x)}-y=\lambda(x)-y$$
+
+So the negative derivative $y-e^{f(x)}$ is the residual on the count scale, as with squared error in lecture
+
+The second derivative is $\frac{d^2L}{df(x)^2}=e^{f(x)}>0$, so the loss is convex in $f(x)$
+
+\item I follow the general gradient boosting recipe from lecture, with partial models $f_m=f_{m-1}-\rho_m\hat g_m$
+
+\textbf{Initialization:} $f_0(x)=\operatorname*{argmin}\limits_c\sum\limits_{i=1}^n(e^c-y_ic)=\log\bar y$, the best constant
+
+\textbf{At step $m=1,2,\ldots,M$:}
+\begin{enumerate}[label=\arabic*.]
+\item Compute the pseudo-outcomes $\gamma_i:=\frac{\partial L(y_i,f(x_i))}{\partial f(x_i)}\Big|_{f=f_{m-1}}=e^{f_{m-1}(x_i)}-y_i$ for $i=1,\ldots,n$
+\item Project the functional gradient onto trees: fit a regression tree $\hat g_m=\operatorname*{argmin}\limits_{h\in\mathcal H}\sum\limits_{i=1}^n(\gamma_i-h(x_i))^2$ on $\{(x_i,\gamma_i)\}_{i=1}^n$ by greedy splitting with the squared error criterion, where $\mathcal H$ is regression trees of a fixed maximum depth
+\item Choose the step size by line search, $\rho_m=\operatorname*{argmin}\limits_\rho\sum\limits_{i=1}^n\left(e^{f_{m-1}(x_i)-\rho\hat g_m(x_i)}-y_i\left(f_{m-1}(x_i)-\rho\hat g_m(x_i)\right)\right)$; this is convex in $\rho$, and its solution satisfies $\sum\limits_{i=1}^n\hat g_m(x_i)\left(y_i-e^{f_{m-1}(x_i)-\rho\hat g_m(x_i)}\right)=0$, which a few Newton steps solve; alternatively use a fixed learning rate $\rho>0$
+\item Update $f_m=f_{m-1}-\rho_m\hat g_m$
+\end{enumerate}
+
+In the notation of the problem, $h_m=\hat g_m$ is the $m$th tree and $\lambda_m=-\rho_m$ (with $f_0$ an intercept tree)
+
+Since $\hat g_m$ is constant on each leaf, the leaf values can instead be refit directly for the Poisson loss: for leaf $l$ with training indices $I_l$, $\min_c\sum_{i\in I_l}L(y_i,f_{m-1}(x_i)+c)$ gives $c_l=\log\frac{\sum_{i\in I_l}y_i}{\sum_{i\in I_l}e^{f_{m-1}(x_i)}}$, so each leaf multiplies the fitted rate by the ratio of observed to predicted counts; in practice this is shrunk by a learning rate, and a leaf with $\sum_{i\in I_l}y_i=0$ needs a lower bound on $c_l$
+
+The number of trees $M$, the tree depth, and the learning rate are hyperparameters chosen on validation data
+\end{enumerate}
+
+\section*{Problem 2}
+Code at: \url{https://github.com/aryankaushal06/STAT-37711-A26-PSet-Code/blob/main/PS3/p2.py}
+
+\begin{enumerate}[label=\alph*.]
+\item \textbf{Setup:} The training set $\mathcal D^{\mathrm{train}}$ of size $n$ is used to fit one predictor per hyperparameter setting, giving $\hat f_1,\ldots,\hat f_k$
+
+A test set $\mathcal D^{\mathrm{test}}=\{(x_j,y_j)\}_{j=1}^l$, drawn i.i.d. from $P$ and independent of $\mathcal D^{\mathrm{train}}$, selects $\hat J=\operatorname*{argmin}\limits_{1\leq r\leq k}\hat{\mathcal L}(\hat f_r)$, where $\hat{\mathcal L}(f)=\frac{1}{l}\sum\limits_{j=1}^lL(y_j,f(x_j))$ and $\mathcal L(f)=\mathbb E[L(Y,f(X))]$
+
+Assume the loss is bounded, $0\leq L\leq b$ (for squared error this holds with $b=(y_{\max}-y_{\min})^2$ when $Y\in[y_{\min},y_{\max}]$ and predictions are clipped to that range)
+
+\textbf{Claim:} for any $\delta\in(0,1)$, with probability at least $1-\delta$,
+$$\left|\mathcal L(\hat f_{\hat J})-\hat{\mathcal L}(\hat f_{\hat J})\right|\leq b\sqrt{\frac{\log(2k/\delta)}{2l}}=:\varepsilon\qquad\text{and}\qquad\mathcal L(\hat f_{\hat J})\leq\min_{1\leq r\leq k}\mathcal L(\hat f_r)+2\varepsilon$$
+
+\textbf{Proof:} Hoeffding's inequality cannot be applied to $\hat f_{\hat J}$ directly, because $\hat J$ depends on the test set, so the losses $L(y_j,\hat f_{\hat J}(x_j))$ are not i.i.d. with mean $\mathcal L(\hat f_{\hat J})$; as in lecture for a finite model class, I use a union bound over the $k$ candidates
+
+Condition on $\mathcal D^{\mathrm{train}}$, so that each $\hat f_r$ is a fixed function
+
+Since $\mathcal D^{\mathrm{test}}$ is independent of $\mathcal D^{\mathrm{train}}$, for fixed $r$ the variables $W_j=L(y_j,\hat f_r(x_j))\in[0,b]$ are i.i.d. with mean $\mathcal L(\hat f_r)$, and two-sided Hoeffding gives
+$$P\left(\left|\mathcal L(\hat f_r)-\hat{\mathcal L}(\hat f_r)\right|>t\;\middle|\;\mathcal D^{\mathrm{train}}\right)\leq2\exp\left(-\frac{2lt^2}{b^2}\right)$$
+
+The bad event for the selected model is contained in the event that some candidate is bad, so by the union bound
+$$P\left(\left|\mathcal L(\hat f_{\hat J})-\hat{\mathcal L}(\hat f_{\hat J})\right|>t\;\middle|\;\mathcal D^{\mathrm{train}}\right)\leq P\left(\exists r:\left|\mathcal L(\hat f_r)-\hat{\mathcal L}(\hat f_r)\right|>t\;\middle|\;\mathcal D^{\mathrm{train}}\right)\leq2k\exp\left(-\frac{2lt^2}{b^2}\right)$$
+
+The right side does not depend on $\mathcal D^{\mathrm{train}}$, so taking expectations over $\mathcal D^{\mathrm{train}}$ gives the same bound unconditionally; setting $2k\exp(-2lt^2/b^2)=\delta$ gives $t=\varepsilon$, which proves the first statement
+
+On the same event, with $r^*=\operatorname*{argmin}_r\mathcal L(\hat f_r)$, the definition of $\hat J$ gives $\mathcal L(\hat f_{\hat J})\leq\hat{\mathcal L}(\hat f_{\hat J})+\varepsilon\leq\hat{\mathcal L}(\hat f_{r^*})+\varepsilon\leq\mathcal L(\hat f_{r^*})+2\varepsilon$ $\qquad\blacksquare$
+
+The bound depends on the test-set size $l$ and on the number of candidate settings $k$ only through $\log k$, and does not depend on $n$; $n$ affects only how good the candidates $\hat f_r$ are, i.e. the size of $\min_r\mathcal L(\hat f_r)$
+
+The one-sided form matching the lecture slides is $P\left(\mathcal L(\hat f_{\hat J})>\hat{\mathcal L}(\hat f_{\hat J})+t\right)\leq k\exp\left(-\frac{2lt^2}{b^2}\right)$
+
+\item If the same test set is used both to select hyperparameters and to report the error, the reported number $\hat{\mathcal L}(\hat f_{\hat J})=\min_r\hat{\mathcal L}(\hat f_r)$ is the minimum of $k$ noisy estimates and is biased downward: $\mathbb E[\min_r\hat{\mathcal L}(\hat f_r)]\leq\min_r\mathcal L(\hat f_r)\leq\mathcal L(\hat f_{\hat J})$, even though each $\hat{\mathcal L}(\hat f_r)$ alone is unbiased
+
+For example, if all $k$ candidates have the same true risk $R$ and roughly independent test errors with standard deviation $\sigma/\sqrt l$, the selected test error is about $R-\sigma\sqrt{2\log k/l}$, so a model no better than the others appears better
+
+The bound in (a) shows that the gap is controlled only while $\log k\ll l$; when $k$ is large relative to $l$ the bound becomes vacuous, and the problem is real: with $k\geq2^l$ candidates (e.g. a hyperparameter such as a random seed or a rich enough search space) one candidate can match the test labels exactly by chance, giving zero test error with a true risk at chance level
+
+In effect the test set becomes training data and we overfit to it, and no untouched data remains to estimate the risk of the final model; this is why a separate validation set is used for selection, leaving the test set for one final evaluation
+
+\item \textbf{Data:} \texttt{winequality-white.csv} has $4898$ wines with $11$ physico-chemical features and integer \texttt{quality} between $3$ and $9$ (mostly $5$ to $7$)
+
+I split rows at random with seed $42$ into $3428$ training ($70\%$), $490$ validation ($10\%$), and $980$ test ($20\%$) rows
+
+Predicting the training mean $5.869$ gives validation MSE $0.8272$ and test MSE $0.7203$
+
+\textbf{Models and grids:} I use \texttt{KNeighborsRegressor} and \texttt{RandomForestRegressor}
+
+KNN predicts the (possibly distance-weighted) average target of the $K$ nearest training points, so I standardize features on the training set and search over $K\in\{1,\ldots,150\}$, \texttt{weights} $\in\{$uniform, distance$\}$, and Minkowski power $p\in\{1,2\}$ (Manhattan or Euclidean distance): $600$ settings
+
+A random forest averages trees fit to bootstrap samples with a random subset of candidate features at each split; I search over \texttt{n\_estimators} $\in\{50,100,200\}$, \texttt{max\_depth} $\in\{\text{None},4,8,12,16,24\}$, \texttt{min\_samples\_leaf} $\in\{1,2,4,8,16\}$, and \texttt{max\_features} (fraction of features tried per split) $\in\{0.2,0.33,0.5,0.75,1.0,\sqrt p\}$: $540$ settings
+
+Both grids exceed the $490$ validation points; each setting is fit on the training set and the one with smallest validation MSE is selected
+
+\begin{table}[H]
+\centering
+\begin{tabular}{llcccc}
+\toprule
+Model & Selected hyperparameters & Train MSE & Val.\ MSE & Test MSE & Test rank \\
+\midrule
+KNN & $K=15$, distance weights, $p=2$ & 0.0000 & 0.4209 & 0.3495 & 145/600 \\
+Random forest & 100 trees, no depth limit, leaf $\geq1$, $0.33$ & 0.0553 & 0.4010 & \textbf{0.3191} & 16/540 \\
+Training mean & --- & --- & 0.8272 & 0.7203 & --- \\
+\bottomrule
+\end{tabular}
+\caption{Selected configurations; test rank is the selected model's position among all settings ordered by test MSE}
+\end{table}
+
+The test MSEs are $\boxed{0.3495}$ for KNN and $\boxed{0.3191}$ for the random forest, less than half the baseline's $0.7203$; KNN has zero training error because with distance weights each training point is its own nearest neighbor
+
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{figures/p2_val_vs_test.png}\caption{Validation against test MSE for every configuration; the dashed line is equality}\end{figure}
+
+\textbf{Validation vs.\ test risk:} Across the grid the two are strongly related: Pearson correlation $0.989$ (KNN) and $0.994$ (forest), Spearman $0.967$ and $0.988$, so ranking by validation MSE nearly reproduces the ranking by test MSE
+
+The selected models are close to the best in the grid on the test set: the best test MSE (which cannot be used for selection) is $0.3335$ for KNN and $0.3136$ for the forest, differences of $0.016$ and $0.0055$
+
+The level, however, differs: test MSE is below validation MSE for almost every setting, by $0.080$ on average for KNN and $0.087$ for the forest, and the training-mean baseline shows the same gap ($0.827$ against $0.720$), so this particular validation set is simply harder than the test set; with only $490$ and $980$ points, sampling variation of this size is expected
+
+Selection adds a further, smaller optimism: the selected setting's test-minus-validation gap is $-0.071$ (KNN) and $-0.082$ (forest), about $0.008$ and $0.005$ less favorable than the grid average, because the minimum of many validation errors is partly chosen for favorable noise
+
+So the validation error of the selected model is not an unbiased estimate of its risk, while the test error, computed once after selection, is; Hoeffding's bound from (a) with $b=36$ (labels and these predictors lie in $[3,9]$), $k=600$, $l=490$, $\delta=0.05$ gives $\varepsilon=3.65$, which is valid but far looser than the observed gaps because it uses only the range of the loss and not its variance
+\end{enumerate}
+
+\section*{Problem 3}
+Code at: \url{https://github.com/aryankaushal06/STAT-37711-A26-PSet-Code/blob/main/PS3/p3.py}
+
+\textbf{Setup:} Each dataset has $500$ rows, a binary label in the first column, and $5$ features
+
+I fit \texttt{GradientBoostingClassifier} (logistic loss, learning rate $0.1$, depth-$3$ trees: the scikit-learn defaults) with $M\in\{1,10,100,300,1000\}$ trees
+
+Since $n=500$ is small, a single test split is noisy, so I repeat a stratified $70/30$ train/test split over $20$ seeds and report mean $\pm$ standard deviation of the classification error; for each split one $1000$-tree fit gives every smaller model through \texttt{staged\_predict}, since the first $M$ trees of a boosted model are the $M$-tree model
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rcccc}
+\toprule
+& \multicolumn{2}{c}{dset0} & \multicolumn{2}{c}{dset1} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+$M$ & Train err & Test err & Train err & Test err \\
+\midrule
+1 & 0.426 & $0.427\pm0.000$ & 0.281 & $0.319\pm0.077$ \\
+10 & 0.150 & $0.275\pm0.031$ & 0.114 & $0.206\pm0.027$ \\
+100 & 0.004 & $0.180\pm0.026$ & 0.010 & $\mathbf{0.186}\pm0.030$ \\
+300 & 0.000 & $\mathbf{0.177}\pm0.028$ & 0.000 & $0.196\pm0.028$ \\
+1000 & 0.000 & $0.180\pm0.027$ & 0.000 & $0.200\pm0.027$ \\
+\bottomrule
+\end{tabular}
+\caption{Gradient boosting classification error, means over $20$ splits}
+\end{table}
+
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{figures/p3_error_curves.png}\caption{Training and test error against the number of trees, mean $\pm$ sd over $20$ splits}\end{figure}
+
+\begin{enumerate}[label=\alph*.]
+\item \textbf{dset0:} Test error falls from $0.427$ (one tree, which only predicts the majority class) to $0.275$ at $M=10$ and $0.180$ at $M=100$, and then stays flat: $0.177$ at $M=300$ and $0.180$ at $M=1000$
+
+Training error is $0$ by $M=300$, yet adding $700$ more trees does not increase the test error
+
+As in the MNIST example from lecture, additional boosting rounds increase model complexity but do not cause overfitting in classification error
+
+\item \textbf{dset1:} Test error is lowest near $M=100$ ($0.186$) and then rises to $0.196$ at $M=300$ and $0.200$ at $M=1000$, while training error is $0$
+
+This is the overfitting pattern of the heart-disease example from lecture: once the useful signal is captured, more trees mainly fit noise in the training labels, so the gap between training and test error widens
+
+\item The difference is explained by whether the label is (close to) a deterministic function of the features, i.e. whether the classes are separable or there is irreducible label noise
+
+From the margin analysis in lecture, when the data are separable, continued boosting keeps increasing the margins $y_is(x_i)$ of the training points, concentrating on the points with the smallest margins (the pseudo-residuals $|r_i|$ decay exponentially in the margin); larger margins give a better generalization bound, so test error does not rise after training error reaches $0$, which matches dset0
+
+When the labels are noisy, as dset1 appears to be, the classes overlap and the training points can only be separated by fitting the mislabeled points; the large training margins are then bought by fitting noise and do not carry over to new data, so boosting overfits and the number of trees should be chosen on validation data (early stopping)
+\end{enumerate}
+\end{document}
