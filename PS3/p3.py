@@ -1,14 +1,4 @@
-"""Problem 3: generalization of gradient boosting as the number of trees grows.
-
-For each dataset (first column = binary label, other columns = features) we fit
-sklearn's GradientBoostingClassifier (default depth-3 trees, learning rate 0.1)
-with up to 1000 trees and report train/test classification error at
-M in {1, 10, 100, 300, 1000}. Since n = 500 is small, we average over 20 random
-stratified 70/30 splits. staged_predict gives every M-tree model from a single
-1000-tree fit, because boosting is sequential.
-"""
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -25,10 +15,8 @@ M_REPORT = [1, 10, 100, 300, 1000]
 M_MAX = 1000
 N_SPLITS = 20
 
-
 def err_curve(model, X, y):
     return np.array([np.mean(pred != y) for pred in model.staged_predict(X)])
-
 
 def run(name):
     d = pd.read_csv(os.path.join(HERE, "data", f"{name}.csv"), header=None)
@@ -40,7 +28,6 @@ def run(name):
         train.append(err_curve(gb, Xtr, ytr))
         test.append(err_curve(gb, Xte, yte))
     return np.array(train), np.array(test)
-
 
 def main():
     rows = []
@@ -69,7 +56,6 @@ def main():
     df = pd.DataFrame(rows).round(4)
     df.to_csv(os.path.join(RES, "p3_results.csv"), index=False)
     print(df.to_string(index=False))
-
 
 if __name__ == "__main__":
     main()
